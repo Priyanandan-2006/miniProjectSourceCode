@@ -2,6 +2,23 @@
 
 This project upgrades the original textbook-style `trans.c` into a more demo-ready banking console app with better reliability, safer input handling, and stronger presentation value for a mini-project or hackathon demo.
 
+## Changes Made in `trans.c`
+
+- Expanded the menu from a basic record manager into a 12-option banking system with export, search, transfer, analytics, leaderboard, customer insights, and recent transaction history.
+- Added file-opening recovery logic so `credit.dat` is created automatically if missing and repaired if the binary file is malformed or not sized for exactly 100 account slots.
+- Reworked record storage into helper-based random-access operations using `getAccountByNumber`, `writeAccount`, and `clearAccount`.
+- Replaced fragile direct input patterns with safer line-based validation functions such as `readLine`, `promptUnsignedInRange`, `promptDoubleValue`, and `promptName`.
+- Added stronger transaction rules to block invalid account numbers, duplicate accounts, negative opening balances, overdraft withdrawals, non-positive transfers, and self-transfers.
+- Improved account listing with an added balance-health status to highlight low-balance accounts.
+- Added flexible account search using account number, first name, or last name with case-insensitive matching.
+- Added fund transfer support between two valid customer accounts.
+- Added analytics reporting for active accounts, total bank balance, average balance, low-balance accounts, and the highest-balance customer.
+- Added a leaderboard view that ranks the top customers by balance using `qsort`.
+- Added a customer insight card that shows customer segment, wellness score, projected balance, loan-readiness note, and smart alert messaging.
+- Added transaction logging through `transactions.log` for create, update, delete, and transfer activity with timestamps.
+- Added recent transaction viewing inside the program so the last few log entries can be read without opening the log file manually.
+- Improved export behavior so `accounts.txt` is generated as a clean formatted text report of active records only.
+
 ## What Was Improved
 
 - Fixed unsafe menu and numeric input handling by replacing raw `scanf`-driven flows with validated line-based parsing.
