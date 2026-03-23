@@ -1,0 +1,3 @@
+[2026-03-23 13:37:44] ACCOUNT_CREATE | from #2 Jane Doe | balance 500.00 | amount 500.00
+[2026-03-23 13:37:44] ACCOUNT_TRANSFER | from #1 Joe John | balance 1022.00 | to #2 Jane Doe | balance 700.00 | amount 200.00
+[2026-03-23 13:45:32] ACCOUNT_CREATE | from #34 priyanand girish | balance 3000.00 | amount 3000.00

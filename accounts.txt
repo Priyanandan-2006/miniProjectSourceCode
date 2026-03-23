@@ -1,0 +1,4 @@
+Acct   Last Name       First Name      Balance
+------------------------------------------------
+1      John            Joe             1022.00
+2      Doe             Jane             700.00
