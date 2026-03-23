@@ -9,19 +9,19 @@ This project upgrades the original textbook-style `trans.c` into a more demo-rea
 -You organized data handling using proper functions, so reading/writing accounts is cleaner and safer.
 -You replaced unsafe inputs with validated input methods to avoid crashes and wrong data.
 -You added rules to prevent mistakes like:
-   duplicate accounts
-   invalid account numbers
-   negative balance
-   overdraft
+   -duplicate accounts
+   -invalid account numbers
+   -negative balance
+   -overdraft
    transferring to the same account
 -The account list now shows which customers have low balance.
 -You can search accounts easily by number or name (case-insensitive).
 -You added money transfer between accounts.
 -You included bank statistics, like:
-    total money in bank
-    average balance
-    highest balance account
-    number of active accounts
+    -total money in bank
+    -average balance
+    -highest balance account
+    -number of active accounts
 -You added a top customers ranking (leaderboard).
 -You created a customer insight system (basically smart analysis + suggestions for each user).
 -Every action is now logged in transactions.log with time.
