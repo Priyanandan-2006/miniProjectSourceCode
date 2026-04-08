@@ -29,6 +29,7 @@ void showAnalytics(FILE *fPtr);
 void displayLeaderboard(FILE *fPtr);
 void customerInsights(FILE *fPtr);
 void viewRecentTransactions(void);
+void viewCustomerTransactionHistory(FILE *fPtr);
 
 int openDataFile(FILE **fPtr);
 int repairDataFileIfNeeded(FILE *fPtr);
@@ -56,7 +57,7 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    while ((choice = enterChoice()) != 12)
+    while ((choice = enterChoice()) != 13)
     {
         switch (choice)
         {
@@ -92,6 +93,9 @@ int main(void)
             break;
         case 11:
             viewRecentTransactions();
+            break;
+        case 12:
+            viewCustomerTransactionHistory(cfPtr);
             break;
         default:
             puts("Incorrect choice. Please select a valid option.");
@@ -726,6 +730,157 @@ void viewRecentTransactions(void)
     }
 }
 
+void viewCustomerTransactionHistory(FILE *fPtr)
+{
+    FILE *logPtr;
+    struct clientData client;
+    unsigned int account;
+    char line[256];
+    char lastTransactionDate[32] = "No transactions yet";
+    char statements[5][256];
+    int statementCount = 0;
+    double totalDeposits = 0.0;
+    double totalWithdrawals = 0.0;
+    double transfersSent = 0.0;
+    double transfersReceived = 0.0;
+
+    if (!promptUnsignedInRange("Enter account number for transaction history (1 - 100): ", 1, MAX_ACCOUNTS, &account))
+    {
+        return;
+    }
+
+    if (!getAccountByNumber(fPtr, account, &client) || client.acctNum == 0)
+    {
+        puts("Account not found.");
+        return;
+    }
+
+    logPtr = fopen(LOG_FILE, "r");
+    if (logPtr == NULL)
+    {
+        puts("No transaction history available yet.");
+        return;
+    }
+
+    while (fgets(line, sizeof(line), logPtr) != NULL)
+    {
+        char timestamp[32] = "";
+        char action[32] = "";
+        unsigned int fromAccount = 0;
+        unsigned int toAccount = 0;
+        double amount = 0.0;
+        char *timestampEnd = strchr(line, ']');
+        char *actionStart = timestampEnd != NULL ? timestampEnd + 2 : line;
+        char *fromPos = strstr(line, "from #");
+        char *toPos = strstr(line, "to #");
+        char *amountPos = strstr(line, "amount ");
+        int matched = 0;
+
+        if (timestampEnd != NULL)
+        {
+            size_t timestampLength = (size_t)(timestampEnd - line - 1);
+            if (timestampLength >= sizeof(timestamp))
+            {
+                timestampLength = sizeof(timestamp) - 1;
+            }
+
+            memcpy(timestamp, line + 1, timestampLength);
+            timestamp[timestampLength] = '\0';
+        }
+
+        if (sscanf(actionStart, "%31s", action) != 1)
+        {
+            continue;
+        }
+
+        if (fromPos != NULL)
+        {
+            sscanf(fromPos, "from #%u", &fromAccount);
+        }
+
+        if (toPos != NULL)
+        {
+            sscanf(toPos, "to #%u", &toAccount);
+        }
+
+        if (amountPos != NULL)
+        {
+            sscanf(amountPos, "amount %lf", &amount);
+        }
+
+        if (strcmp(action, "ACCOUNT_UPDATE") == 0 && fromAccount == account)
+        {
+            if (amount >= 0)
+            {
+                totalDeposits += amount;
+            }
+            else
+            {
+                totalWithdrawals += -amount;
+            }
+            matched = 1;
+        }
+        else if (strcmp(action, "ACCOUNT_TRANSFER") == 0)
+        {
+            if (fromAccount == account)
+            {
+                transfersSent += amount;
+                matched = 1;
+            }
+
+            if (toAccount == account)
+            {
+                transfersReceived += amount;
+                matched = 1;
+            }
+        }
+        else if ((strcmp(action, "ACCOUNT_CREATE") == 0 || strcmp(action, "ACCOUNT_DELETE") == 0) && fromAccount == account)
+        {
+            matched = 1;
+        }
+
+        if (matched)
+        {
+            if (timestamp[0] != '\0' &&
+                (strcmp(lastTransactionDate, "No transactions yet") == 0 || strcmp(timestamp, lastTransactionDate) > 0))
+            {
+                strcpy(lastTransactionDate, timestamp);
+            }
+
+            strncpy(statements[statementCount % 5], line, sizeof(statements[0]) - 1);
+            statements[statementCount % 5][sizeof(statements[0]) - 1] = '\0';
+            ++statementCount;
+        }
+    }
+
+    fclose(logPtr);
+
+    puts("\nCustomer Transaction History");
+    puts("----------------------------");
+    printf("Customer              : %s %s\n", client.firstName, client.lastName);
+    printf("Account number        : #%u\n", client.acctNum);
+    printf("Current balance       : %.2f\n", client.balance);
+    printf("Total deposits        : %.2f\n", totalDeposits);
+    printf("Total withdrawals     : %.2f\n", totalWithdrawals);
+    printf("Transfers sent        : %.2f\n", transfersSent);
+    printf("Transfers received    : %.2f\n", transfersReceived);
+    printf("Last transaction date : %s\n", lastTransactionDate);
+
+    puts("\nMini Statement");
+    puts("--------------");
+
+    if (statementCount == 0)
+    {
+        puts("No transactions found for this account.");
+        return;
+    }
+
+    for (int i = statementCount > 5 ? statementCount - 5 : 0; i < statementCount; ++i)
+    {
+        printf("%s", statements[i % 5]);
+    }
+}
+
 int getAccountByNumber(FILE *fPtr, unsigned int account, struct clientData *client)
 {
     if (account < 1 || account > MAX_ACCOUNTS)
@@ -820,9 +975,10 @@ unsigned int enterChoice(void)
     puts("9 - Show top customers leaderboard");
     puts("10 - Show customer insight card");
     puts("11 - View recent transactions");
-    puts("12 - End program");
+    puts("12 - View customer transaction history");
+    puts("13 - End program");
 
-    if (!promptUnsignedInRange("Enter your choice: ", 1, 12, &menuChoice))
+    if (!promptUnsignedInRange("Enter your choice: ", 1, 13, &menuChoice))
     {
         return 0;
     }
